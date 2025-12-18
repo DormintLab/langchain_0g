@@ -1,0 +1,17 @@
+[project]
+name = "langchain-0g"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "George Kasparyants",email = "gg_plastt@mail.ru"}
+]
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "python-0g[langchain] (>=0.6.1.1,<0.7.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
