@@ -34,11 +34,6 @@ class ZGLLM(OpenAI):
           deployment in wheel distributions (if using CI/CD pipelines).
     """
 
-    provider: ENS = Field(
-        default=ENS("0xf07240Efa67755B5311bc75784a061eDB47165Dd"), exclude=True
-    )
-    """Provider address of LLM in 0g.ai"""
-
     private_key: Optional[SecretStr] = Field(
         default_factory=secret_from_env("A0G_PRIVATE_KEY", default=None)
     )
@@ -65,12 +60,11 @@ class ZGLLM(OpenAI):
         if self.private_key is None:
             raise
         self.zg_client = A0G(private_key=self.private_key.get_secret_value())
-        self.svc = self.zg_client.get_service(self.provider)
         self.client = self.zg_client.get_openai_client(
-            provider=self.provider
+            provider=self.svc.provider
         ).completions
         self.async_client = self.zg_client.get_openai_async_client(
-            provider=self.provider
+            provider=self.svc.provider
         ).completions
         self.model_name = self.svc.model
         self.openai_api_key = SecretStr("")

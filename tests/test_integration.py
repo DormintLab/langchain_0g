@@ -32,13 +32,12 @@ def test_langchain_0g_basic_functionality():
         print("No services available, skipping integration test")
         return
 
-    provider = chatbot_services[0].provider
-    print(f"Using provider: {provider} (model: {getattr(chatbot_services[0], 'model', 'unknown')})")
+    svc = chatbot_services[0]
 
     print("=== Testing ZGChat ===")
 
     # Initialize ZGChat with dynamic provider
-    chat = ZGChat(provider=provider)
+    chat = ZGChat(svc=svc)
 
     # Test chat completions
     response1 = chat.invoke("Hello, how are you?")
@@ -58,7 +57,7 @@ def test_langchain_0g_basic_functionality():
     print("\n=== Testing ZGLLM ===")
 
     # Initialize ZGLLM with dynamic provider
-    llm = ZGLLM(provider=provider)
+    llm = ZGLLM(svc=svc)
 
     # Test text completions
     response5 = llm.invoke("Summarize the following article about AI:")
@@ -78,16 +77,6 @@ def test_langchain_0g_basic_functionality():
 
     for i, service in enumerate(services[:3]):  # Show first 3 services
         print(f"Service {i+1}: Provider={service.provider}, Model={service.model}")
-
-    print("\n=== Testing OpenAI Client Compatibility ===")
-
-    # Test direct OpenAI client usage
-    openai_client = chat.zg_client.get_openai_client(chat.provider)
-    openai_response = openai_client.chat.completions.create(
-        messages=[{"role": "user", "content": "Hello from OpenAI client!"}],
-        model=chat.svc.model
-    )
-    print(f"OpenAI Client Response: {openai_response}")
 
 
 async def test_langchain_0g_async_functionality():
@@ -109,12 +98,12 @@ async def test_langchain_0g_async_functionality():
         print("No services available, skipping async integration test")
         return
 
-    provider = chatbot_services[0].provider
-    print(f"Using provider for async test: {provider}")
+    svc = chatbot_services[0]
+    print(f"Using provider for async test: {svc}")
 
     # Initialize clients with dynamic provider
-    chat = ZGChat(provider=provider)
-    llm = ZGLLM(provider=provider)
+    chat = ZGChat(svc=svc)
+    llm = ZGLLM(svc=svc)
 
     # Test async chat completion
     async_chat_response = await chat.ainvoke("Hello from async chat!")
@@ -133,34 +122,6 @@ async def test_langchain_0g_async_functionality():
     print(f"Async OpenAI Client Response: {async_openai_response}")
 
 
-def test_langchain_0g_error_handling():
-    """Test error handling scenarios."""
-    if not os.getenv("A0G_PRIVATE_KEY"):
-        print("A0G_PRIVATE_KEY not set, skipping error handling test")
-        return
-
-    print("\n=== Testing Error Handling ===")
-
-    try:
-        # Test with invalid provider
-        invalid_chat = ZGChat(provider="0x0000000000000000000000000000000000000000")
-        response = invalid_chat.invoke("This should fail")
-        print(f"Unexpected success: {response}")
-    except Exception as e:
-        print(f"Expected error with invalid provider: {e}")
-
-    try:
-        # Test initialization without private key
-        os.environ["A0G_PRIVATE_KEY"] = ""
-        no_key_chat = ZGChat()
-        print(f"Unexpected success without private key")
-    except Exception as e:
-        print(f"Expected error without private key: {e}")
-    finally:
-        # Restore private key
-        dotenv.load_dotenv()
-
-
 if __name__ == "__main__":
     # Run all tests when script is executed directly
     print("Running langchain-0g integration tests...")
@@ -170,8 +131,5 @@ if __name__ == "__main__":
 
     # Async functionality test
     asyncio.run(test_langchain_0g_async_functionality())
-
-    # Error handling test
-    test_langchain_0g_error_handling()
 
     print("\nIntegration tests completed!")

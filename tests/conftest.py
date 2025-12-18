@@ -6,6 +6,7 @@ from typing import Generator, Optional
 import dotenv
 import pytest
 from a0g import A0G
+from a0g.types.model import ServiceStructOutput
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -29,7 +30,7 @@ def a0g_client(private_key: Optional[str]) -> A0G:
 
 
 @pytest.fixture(scope="session")
-def chatbot_provider(a0g_client: A0G) -> str:
+def svc(a0g_client: A0G) -> ServiceStructOutput:
     """Get a chatbot provider dynamically from available services."""
     services = a0g_client.get_all_services()
 
@@ -39,15 +40,14 @@ def chatbot_provider(a0g_client: A0G) -> str:
     if not chatbot_services:
         pytest.skip("No chatbot services available")
 
-    provider = chatbot_services[0].provider
-    print(f"Using provider: {provider} (model: {getattr(chatbot_services[0], 'model', 'unknown')})")
-    return provider
+    svc = chatbot_services[0]
+    return svc
 
 
 @pytest.fixture(scope="session")
-def test_provider(chatbot_provider: str) -> str:
+def test_provider(svc: ServiceStructOutput) -> ServiceStructOutput:
     """Provide test provider address (alias for backward compatibility)."""
-    return chatbot_provider
+    return svc
 
 
 @pytest.fixture(autouse=True)
@@ -58,17 +58,17 @@ def skip_if_no_private_key(private_key: Optional[str]):
 
 
 @pytest.fixture
-def zgchat_instance(chatbot_provider: str):
+def zgchat_instance(svc: ServiceStructOutput):
     """Create a ZGChat instance for testing."""
     from langchain_0g import ZGChat
-    return ZGChat(provider=chatbot_provider)
+    return ZGChat(svc=svc)
 
 
 @pytest.fixture
-def zgllm_instance(chatbot_provider: str):
+def zgllm_instance(svc: ServiceStructOutput):
     """Create a ZGLLM instance for testing."""
     from langchain_0g import ZGLLM
-    return ZGLLM(provider=chatbot_provider)
+    return ZGLLM(svc=svc)
 
 
 def pytest_configure(config):

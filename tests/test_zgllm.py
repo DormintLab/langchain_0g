@@ -6,6 +6,7 @@ from typing import Optional
 
 import dotenv
 import pytest
+from a0g.types.model import ServiceStructOutput
 
 from langchain_0g import ZGLLM
 
@@ -17,20 +18,19 @@ class TestZGLLM:
     """Test cases for ZGLLM functionality."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, chatbot_provider: str):
+    def setup(self, svc: ServiceStructOutput):
         """Setup test environment."""
         self.private_key = os.getenv("A0G_PRIVATE_KEY")
         if not self.private_key:
             pytest.skip("A0G_PRIVATE_KEY environment variable not set")
 
         # Use dynamically discovered provider
-        self.provider = chatbot_provider
+        self.svc = svc
 
     def test_zgllm_initialization(self):
         """Test ZGLLM can be initialized properly."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
-        assert llm.provider == self.provider
         assert llm.private_key is not None
         assert llm.zg_client is not None
         assert llm.svc is not None
@@ -39,7 +39,7 @@ class TestZGLLM:
 
     def test_zgllm_basic_invoke(self):
         """Test basic synchronous text completion."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         response = llm.invoke("Complete this sentence: The future of AI is")
 
@@ -50,7 +50,7 @@ class TestZGLLM:
 
     def test_zgllm_invoke_with_prompt(self):
         """Test text completion with longer prompt."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         prompt = """
         Write a brief summary of blockchain technology:
@@ -67,7 +67,7 @@ class TestZGLLM:
     @pytest.mark.asyncio
     async def test_zgllm_async_invoke(self):
         """Test asynchronous text completion."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         response = await llm.ainvoke("Explain quantum computing in one paragraph:")
 
@@ -78,7 +78,7 @@ class TestZGLLM:
 
     def test_zgllm_generate(self):
         """Test generation with multiple prompts."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         prompts = [
             "What is artificial intelligence?",
@@ -100,7 +100,7 @@ class TestZGLLM:
     @pytest.mark.asyncio
     async def test_zgllm_async_generate(self):
         """Test async generation with multiple prompts."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         prompts = [
             "Summarize the benefits of renewable energy:",
@@ -120,7 +120,7 @@ class TestZGLLM:
 
     def test_zgllm_get_services(self):
         """Test getting available services."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         services = llm.zg_client.get_all_services()
 
@@ -132,7 +132,7 @@ class TestZGLLM:
 
     def test_zgllm_model_name_access(self):
         """Test that model name is properly set."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         assert hasattr(llm, 'model_name')
         assert llm.model_name is not None
@@ -140,7 +140,7 @@ class TestZGLLM:
 
     def test_zgllm_client_compatibility(self):
         """Test OpenAI client compatibility."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         # Test that the underlying OpenAI client works
         openai_response = llm.client.create(
@@ -155,7 +155,7 @@ class TestZGLLM:
     def test_zgllm_with_parameters(self):
         """Test ZGLLM with various completion parameters."""
         llm = ZGLLM(
-            provider=self.provider,
+            svc=self.svc,
             temperature=0.7,
             max_tokens=100,
             top_p=0.9
@@ -170,7 +170,7 @@ class TestZGLLM:
 
     def test_zgllm_streaming(self):
         """Test streaming text completion."""
-        llm = ZGLLM(provider=self.provider)
+        llm = ZGLLM(svc=self.svc)
 
         try:
             # Test if streaming is supported
@@ -204,11 +204,10 @@ def test_zgllm_basic_functionality():
         print("No services available, skipping test")
         return
 
-    provider = chatbot_services[0].provider
-    print(f"Using provider: {provider} (model: {getattr(chatbot_services[0], 'model', 'unknown')})")
+    svc = chatbot_services[0]
 
     # Initialize ZGLLM with dynamic provider
-    llm = ZGLLM(provider=provider)
+    llm = ZGLLM(svc=svc)
 
     # Test basic text completion
     response1 = llm.invoke("Summarize the following article about AI:")
@@ -243,11 +242,10 @@ async def test_zgllm_async_functionality():
         print("No services available, skipping async test")
         return
 
-    provider = chatbot_services[0].provider
-    print(f"Using provider for async test: {provider}")
+    svc = chatbot_services[0]
 
     # Initialize ZGLLM with dynamic provider
-    llm = ZGLLM(provider=provider)
+    llm = ZGLLM(svc=svc)
 
     # Test async text completion
     response = await llm.ainvoke("Hello from async LLM test!")

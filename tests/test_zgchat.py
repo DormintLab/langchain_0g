@@ -6,6 +6,7 @@ from typing import Optional
 
 import dotenv
 import pytest
+from a0g.types.model import ServiceStructOutput
 from langchain_core.messages import HumanMessage
 
 from langchain_0g import ZGChat
@@ -18,20 +19,18 @@ class TestZGChat:
     """Test cases for ZGChat functionality."""
 
     @pytest.fixture(autouse=True)
-    def setup(self, chatbot_provider: str):
+    def setup(self, svc: ServiceStructOutput):
         """Setup test environment."""
         self.private_key = os.getenv("A0G_PRIVATE_KEY")
         if not self.private_key:
             pytest.skip("A0G_PRIVATE_KEY environment variable not set")
 
         # Use dynamically discovered provider
-        self.provider = chatbot_provider
+        self.svc = svc
 
     def test_zgchat_initialization(self):
         """Test ZGChat can be initialized properly."""
-        chat = ZGChat(provider=self.provider)
-
-        assert chat.provider == self.provider
+        chat = ZGChat(svc=self.svc)
         assert chat.private_key is not None
         assert chat.zg_client is not None
         assert chat.svc is not None
@@ -40,7 +39,7 @@ class TestZGChat:
 
     def test_zgchat_basic_invoke(self):
         """Test basic synchronous chat completion."""
-        chat = ZGChat(provider=self.provider)
+        chat = ZGChat(svc=self.svc)
 
         response = chat.invoke("Hello, how are you?")
 
@@ -50,7 +49,7 @@ class TestZGChat:
 
     def test_zgchat_invoke_with_message_object(self):
         """Test chat completion with LangChain message objects."""
-        chat = ZGChat(provider=self.provider)
+        chat = ZGChat(svc=self.svc)
 
         message = HumanMessage(content="What is 0g.ai?")
         response = chat.invoke([message])
@@ -62,7 +61,7 @@ class TestZGChat:
     @pytest.mark.asyncio
     async def test_zgchat_async_invoke(self):
         """Test asynchronous chat completion."""
-        chat = ZGChat(provider=self.provider)
+        chat = ZGChat(svc=self.svc)
 
         response = await chat.ainvoke("What is the meaning of life?")
 
@@ -72,7 +71,7 @@ class TestZGChat:
 
     def test_zgchat_multiple_messages(self):
         """Test chat with multiple conversation messages."""
-        chat = ZGChat(provider=self.provider)
+        chat = ZGChat(svc=self.svc)
 
         messages = [
             HumanMessage(content="Hello"),
@@ -87,7 +86,7 @@ class TestZGChat:
 
     def test_zgchat_stream_invoke(self):
         """Test streaming chat completion."""
-        chat = ZGChat(provider=self.provider)
+        chat = ZGChat(svc=self.svc)
 
         try:
             # Test if streaming is supported
@@ -103,7 +102,7 @@ class TestZGChat:
 
     def test_zgchat_get_services(self):
         """Test getting available services."""
-        chat = ZGChat(provider=self.provider)
+        chat = ZGChat(svc=self.svc)
 
         services = chat.zg_client.get_all_services()
 
@@ -115,7 +114,7 @@ class TestZGChat:
 
     def test_zgchat_model_name_access(self):
         """Test that model name is properly set."""
-        chat = ZGChat(provider=self.provider)
+        chat = ZGChat(svc=self.svc)
 
         assert hasattr(chat, 'model_name')
         assert chat.model_name is not None
@@ -123,7 +122,7 @@ class TestZGChat:
 
     def test_zgchat_client_compatibility(self):
         """Test OpenAI client compatibility."""
-        chat = ZGChat(provider=self.provider)
+        chat = ZGChat(svc=self.svc)
 
         # Test that the underlying OpenAI client works
         openai_response = chat.client.create(
@@ -154,11 +153,10 @@ def test_zgchat_basic_functionality():
         print("No services available, skipping test")
         return
 
-    provider = chatbot_services[0].provider
-    print(f"Using provider: {provider} (model: {getattr(chatbot_services[0], 'model', 'unknown')})")
+    svc = chatbot_services[0]
 
     # Initialize ZGChat with dynamic provider
-    chat = ZGChat(provider=provider)
+    chat = ZGChat(svc=svc)
 
     # Test basic invocation
     response1 = chat.invoke("Hello, how are you?")
@@ -190,18 +188,13 @@ async def test_zgchat_async_functionality():
     # Find a chatbot service
     chatbot_services = [service for service in services if service.serviceType == 'chatbot']
     if not chatbot_services:
-        # Fallback to first available service
-        if services:
-            chatbot_services = [services[0]]
-        else:
-            print("No services available, skipping async test")
-            return
+        print("No services available, skipping async test")
+        return
 
-    provider = chatbot_services[0].provider
-    print(f"Using provider for async test: {provider}")
+    svc = chatbot_services[0]
 
     # Initialize ZGChat with dynamic provider
-    chat = ZGChat(provider=provider)
+    chat = ZGChat(svc=svc)
 
     # Test async invocation
     response = await chat.ainvoke("Hello from async test!")
