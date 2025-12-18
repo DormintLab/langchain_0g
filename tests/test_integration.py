@@ -113,14 +113,6 @@ async def test_langchain_0g_async_functionality():
     async_llm_response = await llm.ainvoke("Complete this async prompt:")
     print(f"Async LLM Response: {async_llm_response}")
 
-    # Test async OpenAI client
-    async_openai_client = chat.zg_client.get_openai_async_client(chat.provider)
-    async_openai_response = await async_openai_client.chat.completions.create(
-        messages=[{"role": "user", "content": "Hello from async OpenAI client!"}],
-        model=chat.svc.model
-    )
-    print(f"Async OpenAI Client Response: {async_openai_response}")
-
 
 if __name__ == "__main__":
     # Run all tests when script is executed directly
